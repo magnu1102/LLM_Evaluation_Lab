@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Layout } from "../components/Layout";
 import { DashboardPage } from "../pages/Dashboard";
 import { RunDetailPage } from "../pages/RunDetail";
+import { TrendsPage } from "../pages/Trends";
 
 type Json = Record<string, unknown> | unknown[];
 
@@ -18,6 +19,7 @@ function withProviders(initialPath: string) {
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="runs/:id" element={<RunDetailPage />} />
+            <Route path="trends" element={<TrendsPage />} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -42,6 +44,52 @@ function mockFetch(routes: Record<string, Json>) {
 beforeEach(() => mockFetch({}));
 afterEach(() => {
   globalThis.fetch = originalFetch;
+});
+
+describe("Trends", () => {
+  it("groups runs by prompt name@version with a status strip", async () => {
+    mockFetch({
+      "GET /runs": [
+        {
+          id: 1,
+          prompt_template_id: 1,
+          provider: "mock",
+          model: "mock-1",
+          started_at: "2026-05-01T10:00:00Z",
+          finished_at: "2026-05-01T10:00:01Z",
+          summary: { total: 5, passed: 4, failed: 1, needs_review: 0 },
+          results: [],
+        },
+        {
+          id: 2,
+          prompt_template_id: 1,
+          provider: "mock",
+          model: "mock-1",
+          started_at: "2026-05-02T10:00:00Z",
+          finished_at: "2026-05-02T10:00:01Z",
+          summary: { total: 5, passed: 5, failed: 0, needs_review: 0 },
+          results: [],
+        },
+      ],
+      "GET /prompt-templates": [
+        {
+          id: 1,
+          name: "grounded-summarizer",
+          version: 2,
+          system_prompt: "",
+          user_template: "",
+          notes: "",
+          created_at: "2026-04-30T00:00:00Z",
+        },
+      ],
+    });
+    render(withProviders("/trends"));
+    expect(await screen.findByText(/grounded-summarizer@2/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/2 runs/)).toBeInTheDocument();
+      expect(screen.getByText(/latest pass rate 100%/)).toBeInTheDocument();
+    });
+  });
 });
 
 describe("Dashboard", () => {

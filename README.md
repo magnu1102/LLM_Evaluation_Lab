@@ -25,6 +25,7 @@ It is meant as a portfolio piece for AI engineering, software development, and d
 - **Optional LLM-as-judge** as a parallel signal at severity `info`: it is recorded with the deterministic checks but never overrides status or human review.
 - **Human review** is first-class: a reviewer marks each result `pass / fail / needs review` with notes, and the underlying automatic checks remain visible.
 - **Run comparison** groups test cases between two runs into Improved / Regressed / Other change / Unchanged.
+- **Trends** view per prompt name@version: status strip + sparkline of pass rate over time, no chart dependencies.
 - **CLI runner** for headless evaluation: `python scripts/run_eval.py --prompt name@version --all`.
 
 ## Stack
@@ -151,7 +152,6 @@ Full list: [`docs/limitations.md`](docs/limitations.md).
 
 ## Future improvements
 
-- Trend view per prompt over time.
 - Async/queued runs for large case sets.
 - Dataset import/export so test cases can be shared across projects.
 

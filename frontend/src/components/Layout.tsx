@@ -33,6 +33,9 @@ export function Layout() {
           <NavLink to="/compare" style={({ isActive }) => linkStyle(isActive)}>
             Compare
           </NavLink>
+          <NavLink to="/trends" style={({ isActive }) => linkStyle(isActive)}>
+            Trends
+          </NavLink>
           <NavLink to="/health" style={({ isActive }) => linkStyle(isActive)}>
             Health
           </NavLink>
