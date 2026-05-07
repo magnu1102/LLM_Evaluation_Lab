@@ -1,11 +1,31 @@
 # Limitations
 
-> Placeholder — expanded in Phase 4.
+This is a small, focused evaluation harness. The list below is what it intentionally does *not* do, and what readers should keep in mind when interpreting results.
 
-This project is a small evaluation harness, not a benchmark suite. Honest limits:
+## Evaluation limits
 
-- **Deterministic checks are heuristics.** Citation regexes, refusal-phrase lists, and length bounds are easy to game and easy to false-positive. Treat them as signals.
-- **Small samples, no statistical claims.** A run over a handful of seeded cases is not a benchmark; do not present pass rates as accuracy.
-- **LLM-as-judge (when added) has bias.** It tends to agree with similar-style outputs and with itself. It will not be used as a tiebreaker.
-- **No multi-tenant, no auth, no model routing.** Out of scope by design.
-- **Synthetic test data only.** No real personal data, no real case files.
+- **Deterministic checks are heuristics.** A regex-based citation check accepts `[1]` or `[source]` and rejects "see source 1". A refusal-phrase list will miss novel phrasings of "I don't know". Both false positives and false negatives are possible and expected.
+- **Small sample sizes, no statistical claims.** The seed set is a handful of synthetic test cases. Pass rates from this set are not benchmarks and should not be presented as accuracy figures.
+- **Status is triage, not a score.** `pass | fail | needs_review` is a routing signal. It is not weighted, not calibrated, and not comparable across very different test sets.
+- **LLM-as-judge is not in scope yet.** When added, it will be one signal among others, never a tiebreaker. Judge models tend to favour outputs that resemble their own style.
+- **No causal claims about prompt changes.** The Compare page surfaces which test cases changed status between two runs. With small samples, single-run noise can look like a regression. Reviewers are expected to confirm before drawing conclusions.
+
+## System limits
+
+- **Synchronous runs.** `POST /runs` blocks the request until every test case has been evaluated. With real LLM calls and many cases, this can be slow. Acceptable at current scale; a queue would be the right next step.
+- **Single provider per run.** Selected via `LLM_PROVIDER`. The provider abstraction is in place, but there is no per-run multi-provider routing.
+- **No retries on provider failure.** A failing provider call propagates as a 500. There is no per-result retry policy.
+- **No streaming output, no partial progress.** The UI shows a "running…" state and waits for the final response.
+
+## Out-of-scope by design
+
+- **Authentication, multi-tenant separation, RBAC.** This is a single-user local tool.
+- **Production-grade secrets management.** API keys are read from environment; rotation, scoping, and audit are the operator's responsibility.
+- **Real datasets.** All seed test cases are synthetic. No real personal data, no real case files. Importing real datasets would require, at minimum: PII scrubbing, retention rules, and access controls — none of which are in this codebase.
+- **Public sharing of runs.** The dashboard lists runs without any access checks. Do not expose the backend on a public network.
+
+## Things to be careful about reading
+
+- A run's "passed" count includes results where every applicable deterministic check passed, *or* a reviewer manually marked it pass. The counts collapse those cases together — open the Run detail page to see which is which.
+- Two runs can have identical pass counts and still differ on which test cases passed. Always compare runs case-by-case (the Compare page does this).
+- A test case's `expected_behavior` is itself a piece of data that can be wrong. If a `must_include` term is misspelled or a `requires_citation` flag is set incorrectly, every run will look "wrong" for the same reason.

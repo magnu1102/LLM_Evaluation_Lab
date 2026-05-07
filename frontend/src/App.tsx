@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { Layout } from "./components/Layout";
+import { ComparePage } from "./pages/Compare";
 import { DashboardPage } from "./pages/Dashboard";
 import { HealthPage } from "./pages/Health";
 import { NewRunPage } from "./pages/NewRun";
@@ -13,6 +14,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="runs/new" element={<NewRunPage />} />
         <Route path="runs/:id" element={<RunDetailPage />} />
+        <Route path="compare" element={<ComparePage />} />
         <Route path="health" element={<HealthPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

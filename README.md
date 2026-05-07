@@ -10,41 +10,50 @@ This is a developer/evaluation tool — not a chatbot. It helps answer questions
 - Did a new prompt version improve or worsen results compared to a previous one?
 - Which test cases keep failing?
 
-## Status
+## Why this exists
 
-Phase 3 — frontend MVP. The full evaluation loop is now usable from the browser:
+Most "is this LLM working?" answers are vibes. This project demonstrates a more honest workflow: define test cases, define what good looks like per case, run the model, run deterministic checks, and let a human review the results — with both signals stored side by side. It also supports comparing two runs (typically two prompt versions) to surface regressions.
 
-1. **Dashboard** lists recent runs with prompt name@version, model, and pass/fail/needs-review counts.
-2. **New run** lets you pick a prompt template and a subset of test cases, then runs the evaluation against the configured provider.
-3. **Run detail** shows each result's question, model output, deterministic checks, and a review panel for marking pass/fail/needs review with notes — saved via `PATCH /results/{id}/review`.
-4. **Health** page shows backend status and provider configuration.
+It is meant as a portfolio piece for AI engineering, software development, and data/governance work, so the design choices and limitations are documented in [`docs/`](docs/).
 
-## API (current)
+## Features
 
-- `GET /health`
-- `GET /test-cases`
-- `GET /prompt-templates`
-- `POST /runs` — body `{prompt_template_id, test_case_ids?, model?}`
-- `GET /runs`, `GET /runs/{id}`
-- `PATCH /results/{id}/review` — body `{human_rating, human_notes}`
-
-## CLI
-
-```bash
-# Seed test cases, prompts, and criteria from eval/*.yaml
-python scripts/seed.py
-
-# Run all seeded cases against a prompt version using the mock provider
-LLM_PROVIDER=mock python scripts/run_eval.py --prompt grounded-summarizer@2 --all
-```
+- **Test cases as data** in [`eval/test_cases.yaml`](eval/test_cases.yaml) with explicit `expected_behavior` (must include / must not include, citation required, must refuse, length bounds).
+- **Prompt templates with versions** in [`eval/prompt_templates.yaml`](eval/prompt_templates.yaml). Multiple versions of the same prompt can coexist and be compared.
+- **Provider abstraction** with OpenAI and a deterministic mock adapter, selected via `LLM_PROVIDER`. No hardcoded API keys; the mock provider lets the whole stack run without any.
+- **Deterministic checks** for non-empty output, required citations, refusal-on-insufficient-context, must/must-not-include terms, and length bounds — each with a severity, each visible per result.
+- **Human review** is first-class: a reviewer marks each result `pass / fail / needs review` with notes, and the underlying automatic checks remain visible.
+- **Run comparison** groups test cases between two runs into Improved / Regressed / Other change / Unchanged.
+- **CLI runner** for headless evaluation: `python scripts/run_eval.py --prompt name@version --all`.
 
 ## Stack
 
 - **Backend:** Python 3.12, FastAPI, SQLAlchemy 2.x, Alembic
-- **Frontend:** React + TypeScript + Vite
+- **Frontend:** React + TypeScript + Vite, TanStack Query, react-router-dom
 - **Database:** PostgreSQL 16
 - **Local orchestration:** Docker Compose
-- **LLM provider:** configured via env (`LLM_PROVIDER=openai|mock`)
+- **CI:** GitHub Actions (ruff + pytest, tsc + vitest + vite build)
+
+## Architecture
+
+```
+React/Vite ── REST/JSON ──▶ FastAPI ──▶ Postgres
+                              │
+                              └──▶ LLM provider (openai | mock)
+```
+
+Detail and module map: [`docs/architecture.md`](docs/architecture.md).
+
+## Evaluation model
+
+Layered, in order of confidence:
+
+1. **Deterministic checks** — heuristic but cheap and reproducible.
+2. **Structured criteria** — named, severity-tagged, reviewable in YAML.
+3. **Human review** — first-class, never overwritten by automation.
+4. **LLM-as-judge** — explicitly *not* in this version. Future work.
+
+Status (`pass | fail | needs_review`) is derived from check outcomes, with a human rating overriding when present. Full rules: [`docs/evaluation-design.md`](docs/evaluation-design.md), [`docs/scoring.md`](docs/scoring.md).
 
 ## Quick start
 
@@ -56,30 +65,97 @@ docker compose up --build
 - Backend: <http://localhost:8000/health>
 - Frontend: <http://localhost:5173>
 
-## Layout
+The default config uses the **mock provider**, so no API key is needed to demo the app end-to-end. To use OpenAI, set in `.env`:
 
 ```
-backend/    FastAPI app + tests
-frontend/   Vite + React + TS app
-docs/       architecture, evaluation design, scoring, limitations
-eval/       seed test cases, prompt templates, criteria (YAML)
-scripts/    DB reset, seed, run-eval CLIs
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
 ```
 
-## Evaluation model (preview)
+On first start the backend runs `alembic upgrade head` automatically. To populate seed data, run the seed script against the same `DATABASE_URL`:
 
-Evaluation has layers, in order of confidence:
+```bash
+# from the repo root, with backend deps installed in a local venv:
+python -m venv backend/.venv
+backend/.venv/Scripts/pip install -r backend/requirements.txt   # or .../bin/pip on macOS/Linux
+DATABASE_URL=postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab \
+  backend/.venv/Scripts/python scripts/seed.py
+```
 
-1. **Deterministic checks** — citation presence, refusal phrasing, length bounds, must/must-not include terms.
-2. **Structured criteria** — named criteria with severities applied across runs.
-3. **Human review** — first-class, stored alongside automatic checks; never overwritten.
-4. **LLM-as-judge** — optional future addition with disclosed limitations.
+## Example workflow
 
-Automatic checks are signals, not ground truth. The UI surfaces both automatic checks and human review and never silently merges them.
+1. Open the **New run** page, pick a prompt template (e.g. `grounded-summarizer@1`), leave test cases unselected to run all, and click *Run evaluation*.
+2. The runner calls the provider for each test case, stores the output, and runs the deterministic checks. You are taken to the **Run detail** page.
+3. For any result that looks off, expand the question/context, read the model output, and check the per-criterion outcomes. Set a human rating and notes; submit.
+4. Iterate on the prompt: edit `eval/prompt_templates.yaml`, bump the version, re-seed, and run again with `grounded-summarizer@2`.
+5. Open the **Compare** page, pick the two runs, and confirm whether the new version actually improved things — and whether anything regressed.
 
-## Roadmap
+## API
 
-See the build phases in the project notes. Phase 2 adds models, seed data, the evaluation runner, and the deterministic checks. Phase 3 brings the UI for running evaluations and reviewing results. Phase 4 adds run comparison and full docs.
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/health` | Backend status, db connectivity, provider config |
+| `GET` | `/test-cases` | List seeded test cases |
+| `GET` | `/prompt-templates` | List prompt templates (all versions) |
+| `POST` | `/runs` | Run an evaluation; body `{prompt_template_id, test_case_ids?, model?}` |
+| `GET` | `/runs` | List runs (newest first) |
+| `GET` | `/runs/{id}` | Get a run with its results |
+| `PATCH` | `/results/{id}/review` | Set `human_rating` and `human_notes`; recomputes status & summary |
+
+## CLI
+
+```bash
+# Reset schema (destructive)
+python scripts/reset_db.py
+
+# Load eval/*.yaml into the DB (idempotent)
+python scripts/seed.py
+
+# Run an evaluation
+LLM_PROVIDER=mock python scripts/run_eval.py --prompt grounded-summarizer@2 --all
+LLM_PROVIDER=mock python scripts/run_eval.py --prompt support-reply@1 --case-ids 1 2
+```
+
+## Sample test cases
+
+Five synthetic cases ship with the repo:
+
+1. GDPR retention summary requiring citations.
+2. Public-sector case-processing guidance summary.
+3. Insufficient-context refusal scenario.
+4. Length-bounded customer support reply.
+5. Source-grounded Q&A that must refuse rather than invent a retention period.
+
+Domains are deliberately bland and synthetic — no real personal data.
+
+## Limitations
+
+- Deterministic checks are heuristics, not ground truth.
+- Sample size is small; pass rates are not benchmarks.
+- Runs execute synchronously; large case sets will block the request.
+- No auth, no multi-tenant, no RBAC. Local tool only.
+
+Full list: [`docs/limitations.md`](docs/limitations.md).
+
+## Future improvements
+
+- LLM-as-judge as an additional, clearly-disclosed signal.
+- CSV/JSON export of runs.
+- Trend view per prompt over time.
+- Second provider adapter (Anthropic) using the existing abstraction.
+- Async/queued runs for large case sets.
+- Dataset import/export so test cases can be shared across projects.
+
+## Repository layout
+
+```
+backend/      FastAPI app, SQLAlchemy models, Alembic migrations, tests
+frontend/     React + TS + Vite app, vitest suite
+docs/         architecture, evaluation design, scoring, limitations
+eval/         seed test cases, prompt templates, criteria (YAML)
+scripts/      reset_db, seed, run_eval CLIs
+```
 
 ## License
 
