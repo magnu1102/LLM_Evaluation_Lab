@@ -26,6 +26,7 @@ It is meant as a portfolio piece for AI engineering, software development, and d
 - **Human review** is first-class: a reviewer marks each result `pass / fail / needs review` with notes, and the underlying automatic checks remain visible.
 - **Run comparison** groups test cases between two runs into Improved / Regressed / Other change / Unchanged.
 - **Trends** view per prompt name@version: status strip + sparkline of pass rate over time, no chart dependencies.
+- **Dataset import/export** of test cases as YAML or JSON, round-tripping with `eval/test_cases.yaml`.
 - **Asynchronous runs.** `POST /runs` returns `202` immediately; the run progresses through `pending → running → completed | failed` via a FastAPI `BackgroundTasks` worker, with the UI polling while non-terminal.
 - **CLI runner** for headless evaluation: `python scripts/run_eval.py --prompt name@version --all`.
 
@@ -108,6 +109,9 @@ DATABASE_URL=postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab \
 |---|---|---|
 | `GET` | `/health` | Backend status, db connectivity, provider config |
 | `GET` | `/test-cases` | List seeded test cases |
+| `GET` | `/test-cases/export.yaml` | Download dataset as YAML (same shape as `eval/test_cases.yaml`) |
+| `GET` | `/test-cases/export.json` | Download dataset as JSON |
+| `POST` | `/test-cases/import` | Upsert test cases from a YAML or JSON upload (`multipart/form-data`, field `file`); matches by `title` |
 | `GET` | `/prompt-templates` | List prompt templates (all versions) |
 | `POST` | `/runs` | Queue an evaluation (returns `202` with `state=pending`); body `{prompt_template_id, test_case_ids?, model?, enable_llm_judge?}` |
 | `GET` | `/runs` | List runs (newest first) |

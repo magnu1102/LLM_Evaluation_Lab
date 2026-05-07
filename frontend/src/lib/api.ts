@@ -31,4 +31,23 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+  importTestCases: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    const resp = await fetch(`${BASE}/test-cases/import`, { method: "POST", body: form });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      throw new Error(`${resp.status} ${resp.statusText}: ${text || "import failed"}`);
+    }
+    return (await resp.json()) as {
+      created: number;
+      updated: number;
+      errors: { index: number; error: string }[];
+    };
+  },
+};
+
+export const TEST_CASE_EXPORT_URLS = {
+  yaml: `${BASE}/test-cases/export.yaml`,
+  json: `${BASE}/test-cases/export.json`,
 };

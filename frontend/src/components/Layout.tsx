@@ -36,6 +36,9 @@ export function Layout() {
           <NavLink to="/trends" style={({ isActive }) => linkStyle(isActive)}>
             Trends
           </NavLink>
+          <NavLink to="/test-cases" style={({ isActive }) => linkStyle(isActive)}>
+            Test cases
+          </NavLink>
           <NavLink to="/health" style={({ isActive }) => linkStyle(isActive)}>
             Health
           </NavLink>
