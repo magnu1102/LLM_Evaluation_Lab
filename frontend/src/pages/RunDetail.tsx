@@ -6,6 +6,8 @@ import { StatusPill } from "../components/StatusPill";
 import { api } from "../lib/api";
 import type { Result, Status, TestCase } from "../types";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
 export function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
   const runId = Number(id);
@@ -30,7 +32,30 @@ export function RunDetailPage() {
   return (
     <section>
       <Link to="/">← Back to dashboard</Link>
-      <h2 style={{ marginTop: 8 }}>Run #{run.id}</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginTop: 8,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Run #{run.id}</h2>
+        <div style={{ display: "flex", gap: 8 }}>
+          <a
+            href={`${API_BASE}/runs/${run.id}/export.json`}
+            style={{ fontSize: 14 }}
+          >
+            ⬇ JSON
+          </a>
+          <a
+            href={`${API_BASE}/runs/${run.id}/export.csv`}
+            style={{ fontSize: 14 }}
+          >
+            ⬇ CSV
+          </a>
+        </div>
+      </div>
       <p style={{ color: "#666" }}>
         {run.provider} / {run.model} · started {new Date(run.started_at).toLocaleString()}
       </p>

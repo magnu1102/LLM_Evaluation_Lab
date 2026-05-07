@@ -101,6 +101,8 @@ DATABASE_URL=postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab \
 | `POST` | `/runs` | Run an evaluation; body `{prompt_template_id, test_case_ids?, model?}` |
 | `GET` | `/runs` | List runs (newest first) |
 | `GET` | `/runs/{id}` | Get a run with its results |
+| `GET` | `/runs/{id}/export.json` | Download run + results as JSON |
+| `GET` | `/runs/{id}/export.csv` | Download run + results as a flat CSV |
 | `PATCH` | `/results/{id}/review` | Set `human_rating` and `human_notes`; recomputes status & summary |
 
 ## CLI
@@ -141,7 +143,6 @@ Full list: [`docs/limitations.md`](docs/limitations.md).
 ## Future improvements
 
 - LLM-as-judge as an additional, clearly-disclosed signal.
-- CSV/JSON export of runs.
 - Trend view per prompt over time.
 - Second provider adapter (Anthropic) using the existing abstraction.
 - Async/queued runs for large case sets.
