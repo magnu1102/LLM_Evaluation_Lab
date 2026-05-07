@@ -2,3 +2,7 @@ node_modules
 dist
 .vite
 *.log
+*.tsbuildinfo
+# emitted JS from tsc (we use vite for bundling — tsc is type-check only)
+src/**/*.js
+src/**/*.js.map

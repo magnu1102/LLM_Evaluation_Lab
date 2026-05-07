@@ -12,7 +12,12 @@ This is a developer/evaluation tool — not a chatbot. It helps answer questions
 
 ## Status
 
-Phase 2 — backend MVP. Models, seed data, evaluation runner with deterministic checks, REST API, and a CLI runner are all in place. The frontend still renders the Phase 1 health page; the dashboard / run / review UI lands in Phase 3.
+Phase 3 — frontend MVP. The full evaluation loop is now usable from the browser:
+
+1. **Dashboard** lists recent runs with prompt name@version, model, and pass/fail/needs-review counts.
+2. **New run** lets you pick a prompt template and a subset of test cases, then runs the evaluation against the configured provider.
+3. **Run detail** shows each result's question, model output, deterministic checks, and a review panel for marking pass/fail/needs review with notes — saved via `PATCH /results/{id}/review`.
+4. **Health** page shows backend status and provider configuration.
 
 ## API (current)
 
