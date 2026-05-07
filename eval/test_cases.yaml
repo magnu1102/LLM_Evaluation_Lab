@@ -1,0 +1,14 @@
+# Seed test cases. Populated in Phase 2.
+# Schema (planned):
+# - title: string
+#   tags: [string]
+#   context: string         # source material the model is allowed to use
+#   question: string        # user-facing task
+#   expected_behavior:
+#     must_include: [string]
+#     must_not_include: [string]
+#     requires_citation: bool
+#     must_refuse: bool
+#     max_chars: int | null
+
+cases: []

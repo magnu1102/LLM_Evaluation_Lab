@@ -1,0 +1,9 @@
+# Seed evaluation criteria. Populated in Phase 2.
+# Schema (planned):
+# - name: string
+#   description: string
+#   type: deterministic | human | llm_judge
+#   severity: info | warn | fail
+#   examples: [string]
+
+criteria: []

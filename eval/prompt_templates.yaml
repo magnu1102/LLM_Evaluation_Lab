@@ -1,0 +1,9 @@
+# Seed prompt templates. Populated in Phase 2.
+# Schema (planned):
+# - name: string
+#   version: int
+#   system_prompt: string
+#   user_template: string   # Jinja-ish placeholders: {{context}}, {{question}}
+#   notes: string
+
+templates: []
