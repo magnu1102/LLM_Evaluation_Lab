@@ -20,7 +20,7 @@ It is meant as a portfolio piece for AI engineering, software development, and d
 
 - **Test cases as data** in [`eval/test_cases.yaml`](eval/test_cases.yaml) with explicit `expected_behavior` (must include / must not include, citation required, must refuse, length bounds).
 - **Prompt templates with versions** in [`eval/prompt_templates.yaml`](eval/prompt_templates.yaml). Multiple versions of the same prompt can coexist and be compared.
-- **Provider abstraction** with OpenAI and a deterministic mock adapter, selected via `LLM_PROVIDER`. No hardcoded API keys; the mock provider lets the whole stack run without any.
+- **Provider abstraction** with OpenAI, Anthropic, and a deterministic mock adapter, selected via `LLM_PROVIDER`. No hardcoded API keys; the mock provider lets the whole stack run without any.
 - **Deterministic checks** for non-empty output, required citations, refusal-on-insufficient-context, must/must-not-include terms, and length bounds — each with a severity, each visible per result.
 - **Human review** is first-class: a reviewer marks each result `pass / fail / needs review` with notes, and the underlying automatic checks remain visible.
 - **Run comparison** groups test cases between two runs into Improved / Regressed / Other change / Unchanged.
@@ -65,12 +65,20 @@ docker compose up --build
 - Backend: <http://localhost:8000/health>
 - Frontend: <http://localhost:5173>
 
-The default config uses the **mock provider**, so no API key is needed to demo the app end-to-end. To use OpenAI, set in `.env`:
+The default config uses the **mock provider**, so no API key is needed to demo the app end-to-end. To use OpenAI:
 
 ```
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
+```
+
+Or Anthropic:
+
+```
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001
 ```
 
 On first start the backend runs `alembic upgrade head` automatically. To populate seed data, run the seed script against the same `DATABASE_URL`:
@@ -144,7 +152,6 @@ Full list: [`docs/limitations.md`](docs/limitations.md).
 
 - LLM-as-judge as an additional, clearly-disclosed signal.
 - Trend view per prompt over time.
-- Second provider adapter (Anthropic) using the existing abstraction.
 - Async/queued runs for large case sets.
 - Dataset import/export so test cases can be shared across projects.
 

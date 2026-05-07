@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     llm_provider: str = "mock"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-haiku-4-5-20251001"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
@@ -20,6 +22,8 @@ class Settings(BaseSettings):
             return True
         if self.llm_provider == "openai":
             return bool(self.openai_api_key)
+        if self.llm_provider == "anthropic":
+            return bool(self.anthropic_api_key)
         return False
 
 
