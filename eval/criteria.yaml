@@ -1,9 +1,49 @@
-# Seed evaluation criteria. Populated in Phase 2.
-# Schema (planned):
-# - name: string
-#   description: string
-#   type: deterministic | human | llm_judge
-#   severity: info | warn | fail
-#   examples: [string]
+criteria:
+  - name: non_empty
+    type: deterministic
+    severity: fail
+    description: Output must not be empty or whitespace-only.
+    examples: []
 
-criteria: []
+  - name: required_citation
+    type: deterministic
+    severity: fail
+    description: |
+      When the test case requires citations, the output must contain at
+      least one bracketed citation marker like [1] or [source].
+    examples: ["[1]", "[source]"]
+
+  - name: refusal_when_required
+    type: deterministic
+    severity: fail
+    description: |
+      When the context is insufficient, the output must contain refusal
+      or uncertainty phrasing rather than guessing.
+    examples:
+      - "I don't have enough information"
+      - "cannot determine"
+      - "not specified"
+
+  - name: must_include
+    type: deterministic
+    severity: fail
+    description: All required terms must appear in the output (case-insensitive).
+    examples: []
+
+  - name: must_not_include
+    type: deterministic
+    severity: fail
+    description: Forbidden terms (e.g. invented facts, off-policy phrases) must not appear.
+    examples: []
+
+  - name: min_length
+    type: deterministic
+    severity: warn
+    description: Output should meet the minimum length expected for the task.
+    examples: []
+
+  - name: max_length
+    type: deterministic
+    severity: warn
+    description: Output should stay within the configured maximum length.
+    examples: []

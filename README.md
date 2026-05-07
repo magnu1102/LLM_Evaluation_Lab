@@ -12,7 +12,26 @@ This is a developer/evaluation tool — not a chatbot. It helps answer questions
 
 ## Status
 
-Phase 1 — project skeleton. Backend exposes `/health`; frontend renders a health badge; Postgres runs in Docker Compose. No LLM calls yet.
+Phase 2 — backend MVP. Models, seed data, evaluation runner with deterministic checks, REST API, and a CLI runner are all in place. The frontend still renders the Phase 1 health page; the dashboard / run / review UI lands in Phase 3.
+
+## API (current)
+
+- `GET /health`
+- `GET /test-cases`
+- `GET /prompt-templates`
+- `POST /runs` — body `{prompt_template_id, test_case_ids?, model?}`
+- `GET /runs`, `GET /runs/{id}`
+- `PATCH /results/{id}/review` — body `{human_rating, human_notes}`
+
+## CLI
+
+```bash
+# Seed test cases, prompts, and criteria from eval/*.yaml
+python scripts/seed.py
+
+# Run all seeded cases against a prompt version using the mock provider
+LLM_PROVIDER=mock python scripts/run_eval.py --prompt grounded-summarizer@2 --all
+```
 
 ## Stack
 

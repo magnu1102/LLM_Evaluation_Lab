@@ -1,14 +1,78 @@
-# Seed test cases. Populated in Phase 2.
-# Schema (planned):
-# - title: string
-#   tags: [string]
-#   context: string         # source material the model is allowed to use
-#   question: string        # user-facing task
-#   expected_behavior:
-#     must_include: [string]
-#     must_not_include: [string]
-#     requires_citation: bool
-#     must_refuse: bool
-#     max_chars: int | null
+# Synthetic test cases. Safe public-sector / support flavours, no real data.
 
-cases: []
+cases:
+  - title: GDPR retention summary with citations
+    tags: [gdpr, summary, citations]
+    context: |
+      [1] Personal data must be retained only as long as necessary for the
+      purposes for which it is processed.
+      [2] Retention periods for case files are documented in the records
+      schedule and reviewed annually.
+    question: |
+      Summarize the retention rules. Cite sources as [n] when stating facts.
+    expected_behavior:
+      must_include: ["retain", "necessary"]
+      must_not_include: ["forever", "indefinitely"]
+      requires_citation: true
+      must_refuse: false
+      min_chars: 40
+      max_chars: 600
+
+  - title: Case processing guidance summary
+    tags: [public-sector, guidance]
+    context: |
+      Internal policy: process each case in order of receipt, document the
+      decision in the case management system, and notify the applicant within
+      the statutory deadline.
+    question: |
+      Summarize the policy in two sentences for a new case officer.
+    expected_behavior:
+      must_include: ["order", "deadline"]
+      must_not_include: []
+      requires_citation: false
+      must_refuse: false
+      min_chars: 40
+      max_chars: 400
+
+  - title: Insufficient context — should refuse
+    tags: [refusal, grounding]
+    context: "(none)"
+    question: |
+      Based on the policy, what is the maximum statutory deadline in days?
+      [no context provided]
+    expected_behavior:
+      must_include: []
+      must_not_include: ["30 days", "60 days", "90 days"]
+      requires_citation: false
+      must_refuse: true
+      min_chars: 20
+      max_chars: 400
+
+  - title: Customer support — short reply
+    tags: [support, length]
+    context: |
+      Product FAQ: most connectivity issues are resolved by restarting the
+      device. If the issue persists, escalate to tier 2.
+    question: |
+      Draft a short customer support reply for a connectivity complaint.
+    expected_behavior:
+      must_include: ["restart"]
+      must_not_include: ["refund", "compensation"]
+      requires_citation: false
+      must_refuse: false
+      min_chars: 20
+      max_chars: 240
+
+  - title: Source-grounded Q&A — must not invent
+    tags: [grounding, hallucination]
+    context: |
+      [1] The records schedule lists retention periods for each document type.
+    question: |
+      Quote the exact retention period for HR records, with citation [n].
+    expected_behavior:
+      must_include: []
+      must_not_include: ["7 years", "10 years", "indefinitely"]
+      requires_citation: true
+      must_refuse: true
+      min_chars: 20
+      max_chars: 400

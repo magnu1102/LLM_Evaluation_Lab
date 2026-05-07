@@ -2,11 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routes import health
+from app.routes import health, prompt_templates, results, runs, test_cases
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="LLM Evaluation Lab", version="0.1.0")
+    app = FastAPI(title="LLM Evaluation Lab", version="0.2.0")
 
     app.add_middleware(
         CORSMiddleware,
@@ -16,6 +16,10 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(test_cases.router)
+    app.include_router(prompt_templates.router)
+    app.include_router(runs.router)
+    app.include_router(results.router)
     return app
 
 
