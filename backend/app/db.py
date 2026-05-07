@@ -25,11 +25,3 @@ def db_ok() -> bool:
         return True
     except Exception:
         return False
-
-
-def init_db() -> None:
-    """Create all tables. Used for tests and quick local bootstrapping;
-    production deployments should use Alembic migrations instead."""
-    import app.models  # noqa: F401  ensure models are registered on Base
-
-    Base.metadata.create_all(bind=engine)

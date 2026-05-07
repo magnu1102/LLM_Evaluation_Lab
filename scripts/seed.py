@@ -1,11 +1,18 @@
-"""Load eval/*.yaml into the database. Idempotent: upserts by natural keys."""
+"""Load eval/*.yaml into the database. Idempotent: upserts by natural keys.
+
+Schema is owned by Alembic. Run `docker compose up` (or `alembic upgrade
+head` against your DATABASE_URL) before this script — seed.py only inserts
+data, it does not create tables. Mixing the two leads to a duplicate-table
+error on first boot because Alembic does not record migrations applied
+through SQLAlchemy's metadata.create_all().
+"""
 from pathlib import Path
 
 import _bootstrap  # noqa: F401
 import yaml
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 
-from app.db import SessionLocal, init_db
+from app.db import SessionLocal, engine
 from app.models import Criterion, PromptTemplate, TestCase
 
 EVAL_DIR = Path(__file__).resolve().parent.parent / "eval"
@@ -93,7 +100,11 @@ def seed_criteria(session) -> int:
 
 
 def main() -> None:
-    init_db()
+    if not inspect(engine).has_table("test_cases"):
+        raise SystemExit(
+            "Schema is missing — run `docker compose up` (or `alembic upgrade head` "
+            "against your DATABASE_URL) before seeding."
+        )
     with SessionLocal() as session:
         tc = seed_test_cases(session)
         pt = seed_prompts(session)

@@ -85,15 +85,29 @@ ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-haiku-4-5-20251001
 ```
 
-On first start the backend runs `alembic upgrade head` automatically. To populate seed data, run the seed script against the same `DATABASE_URL`:
+On first start the backend runs `alembic upgrade head` automatically — Alembic owns the schema. **Wait for the backend to be up before seeding**, otherwise the seed script will refuse to run with a clear error. Then, from the repo root with backend deps installed in a local venv:
 
 ```bash
-# from the repo root, with backend deps installed in a local venv:
 python -m venv backend/.venv
 backend/.venv/Scripts/pip install -r backend/requirements.txt   # or .../bin/pip on macOS/Linux
-DATABASE_URL=postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab \
-  backend/.venv/Scripts/python scripts/seed.py
 ```
+
+PowerShell:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab"
+backend\.venv\Scripts\python scripts\seed.py
+Remove-Item Env:DATABASE_URL
+```
+
+bash / zsh:
+
+```bash
+DATABASE_URL=postgresql+psycopg://evaluser:evalpass@localhost:5432/evallab \
+  backend/.venv/bin/python scripts/seed.py
+```
+
+Seeding is idempotent: re-running it upserts changes. The dev Postgres credentials above are local-only and the container binds to `127.0.0.1`; change them if you deploy this anywhere.
 
 ## Example workflow
 

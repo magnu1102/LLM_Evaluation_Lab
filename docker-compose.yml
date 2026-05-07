@@ -5,8 +5,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-evaluser}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evalpass}
       POSTGRES_DB: ${POSTGRES_DB:-evallab}
+    # Bind to loopback only — this is a local dev compose, the DB should
+    # never be reachable from the network. The published port exists so
+    # scripts/seed.py and ad-hoc psql connections from the host can reach
+    # the container; that does not require listening on 0.0.0.0.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:

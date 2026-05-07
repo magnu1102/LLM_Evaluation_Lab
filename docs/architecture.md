@@ -42,7 +42,7 @@
 |------|----------------|
 | `backend/app/main.py` | App factory, CORS, router includes |
 | `backend/app/config.py` | Env-driven settings (Pydantic Settings) |
-| `backend/app/db.py` | Engine, `SessionLocal`, `Base`, `init_db()` |
+| `backend/app/db.py` | Engine, `SessionLocal`, `Base`, `db_ok()` health probe |
 | `backend/app/models/` | SQLAlchemy declarative models |
 | `backend/app/schemas/` | Pydantic v2 request/response models |
 | `backend/app/providers/` | `LLMProvider` protocol + OpenAI / mock adapters |
