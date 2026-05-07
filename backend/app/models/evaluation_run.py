@@ -21,6 +21,9 @@ class EvaluationRun(Base):
         nullable=False,
     )
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    state: Mapped[str] = mapped_column(
+        String(16), default="pending", nullable=False
+    )  # pending | running | completed | failed
     summary: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
 
     prompt_template = relationship("PromptTemplate")

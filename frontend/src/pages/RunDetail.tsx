@@ -2,6 +2,7 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { isTerminal, RunStateBadge } from "../components/RunStateBadge";
 import { StatusPill } from "../components/StatusPill";
 import { api } from "../lib/api";
 import type { Result, Status, TestCase } from "../types";
@@ -14,7 +15,13 @@ export function RunDetailPage() {
 
   const [runQ, casesQ] = useQueries({
     queries: [
-      { queryKey: ["run", runId], queryFn: () => api.getRun(runId), enabled: !Number.isNaN(runId) },
+      {
+        queryKey: ["run", runId],
+        queryFn: () => api.getRun(runId),
+        enabled: !Number.isNaN(runId),
+        refetchInterval: (q: { state: { data?: { state?: string } } }) =>
+          q.state.data && isTerminal(q.state.data.state as never) ? false : 1500,
+      },
       { queryKey: ["test-cases"], queryFn: api.listTestCases },
     ],
   });
@@ -40,7 +47,9 @@ export function RunDetailPage() {
           marginTop: 8,
         }}
       >
-        <h2 style={{ margin: 0 }}>Run #{run.id}</h2>
+        <h2 style={{ margin: 0, display: "flex", gap: 12, alignItems: "center" }}>
+          Run #{run.id} <RunStateBadge state={run.state} />
+        </h2>
         <div style={{ display: "flex", gap: 8 }}>
           <a
             href={`${API_BASE}/runs/${run.id}/export.json`}
@@ -65,6 +74,26 @@ export function RunDetailPage() {
         <span>Failed: {run.summary.failed}</span>
         <span>Needs review: {run.summary.needs_review}</span>
       </div>
+
+      {run.state === "failed" && run.summary.error && (
+        <div
+          style={{
+            background: "#f8d7da",
+            color: "#721c24",
+            padding: 12,
+            borderRadius: 6,
+            marginBottom: 16,
+          }}
+        >
+          <strong>Run failed:</strong> {run.summary.error}
+        </div>
+      )}
+
+      {(run.state === "pending" || run.state === "running") && (
+        <p style={{ color: "#666", fontStyle: "italic" }}>
+          Waiting for results — this view refreshes automatically.
+        </p>
+      )}
 
       <div style={{ display: "grid", gap: 16 }}>
         {run.results.map((r) => (

@@ -57,6 +57,7 @@ describe("Trends", () => {
           model: "mock-1",
           started_at: "2026-05-01T10:00:00Z",
           finished_at: "2026-05-01T10:00:01Z",
+          state: "completed",
           summary: { total: 5, passed: 4, failed: 1, needs_review: 0 },
           results: [],
         },
@@ -67,6 +68,7 @@ describe("Trends", () => {
           model: "mock-1",
           started_at: "2026-05-02T10:00:00Z",
           finished_at: "2026-05-02T10:00:01Z",
+          state: "completed",
           summary: { total: 5, passed: 5, failed: 0, needs_review: 0 },
           results: [],
         },
@@ -124,6 +126,7 @@ describe("RunDetail", () => {
             model: "mock-1",
             started_at: new Date().toISOString(),
             finished_at: new Date().toISOString(),
+            state: "completed",
             summary: { total: 1, passed: 0, failed: 0, needs_review: 1 },
             results: [
               {

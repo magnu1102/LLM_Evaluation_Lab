@@ -48,11 +48,14 @@ export interface Result {
   status: Status;
 }
 
+export type RunState = "pending" | "running" | "completed" | "failed";
+
 export interface RunSummary {
   total: number;
   passed: number;
   failed: number;
   needs_review: number;
+  error?: string | null;
 }
 
 export interface Run {
@@ -62,6 +65,7 @@ export interface Run {
   model: string;
   started_at: string;
   finished_at: string | null;
+  state: RunState;
   summary: RunSummary;
   results: Result[];
 }

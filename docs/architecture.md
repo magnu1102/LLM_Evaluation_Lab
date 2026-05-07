@@ -22,11 +22,13 @@
 
 ## Request flow — `POST /runs`
 
-1. UI submits `{prompt_template_id, test_case_ids?, model?}` from the New run page.
-2. Backend loads the prompt template and the selected test cases.
-3. For each test case, the runner (`backend/app/evaluation/runner.py`) renders the user template (`{{context}}` and `{{question}}` placeholders), calls `provider.complete(system, user)`, and stores the model output, latency, automatic check outcomes, and a derived status.
-4. After all cases, the run's summary counts are written and the full `RunRead` document is returned.
-5. The UI invalidates the runs query and navigates to `/runs/{id}`.
+`POST /runs` returns immediately and the work happens in a FastAPI `BackgroundTasks` worker. The run row carries a `state` column that progresses `pending → running → completed | failed`; the UI polls while the run is non-terminal.
+
+1. UI submits `{prompt_template_id, test_case_ids?, model?, enable_llm_judge?}` from the New run page.
+2. Backend validates the prompt and selected test cases, creates an `EvaluationRun` row with `state="pending"` and an empty result set, and returns `202 Accepted` with the queued run.
+3. After the response is sent, `execute_pending_run(run_id, ...)` runs in the background: it opens its own session, marks `state="running"`, iterates the cases via the runner, and writes results as it goes.
+4. On success the run is marked `state="completed"` with the final summary counts. On any exception the run is marked `state="failed"` with the error string captured in `summary.error` (truncated).
+5. The UI's run-detail and dashboard queries poll while any run is non-terminal and stop polling once it reaches `completed` or `failed`.
 
 ## Review flow — `PATCH /results/{id}/review`
 
@@ -56,5 +58,5 @@
 ## What's deliberately not here
 
 - **Auth, multi-tenant, RBAC.** Out of scope; documented in [limitations.md](limitations.md).
-- **Async / queued runs.** Runs execute synchronously inside the request. With a real provider and many cases this becomes a bottleneck; that's acceptable for the current scale and surfaces clearly to the user via the loading state.
+- **External job queue.** Runs execute in-process via FastAPI `BackgroundTasks`. That's enough for a single-instance deployment and small case sets but won't survive a restart mid-run, won't scale to multiple workers, and won't retry on failure. A real queue (Celery / RQ / ARQ + Redis) is the right next step if this graduates beyond a portfolio piece.
 - **Model routing / fallbacks.** A single provider per run, chosen by env. A second adapter would slot into `providers/` without changing the runner.

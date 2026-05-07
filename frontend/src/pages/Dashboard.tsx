@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { isTerminal, RunStateBadge } from "../components/RunStateBadge";
 import { StatusPill } from "../components/StatusPill";
 import { api } from "../lib/api";
 import type { PromptTemplate, Run } from "../types";
@@ -10,7 +11,13 @@ const td = { padding: "8px 12px", borderBottom: "1px solid #eee" } as const;
 export function DashboardPage() {
   const [runsQ, promptsQ] = useQueries({
     queries: [
-      { queryKey: ["runs"], queryFn: api.listRuns },
+      {
+        queryKey: ["runs"],
+        queryFn: api.listRuns,
+        // Refetch while any run is non-terminal so counts update live.
+        refetchInterval: (q: { state: { data?: Run[] } }) =>
+          q.state.data?.some((r) => !isTerminal(r.state)) ? 2000 : false,
+      },
       { queryKey: ["prompt-templates"], queryFn: api.listPromptTemplates },
     ],
   });
@@ -43,6 +50,7 @@ export function DashboardPage() {
           <thead>
             <tr style={{ textAlign: "left", background: "#fafafa" }}>
               <th style={td}>Run</th>
+              <th style={td}>State</th>
               <th style={td}>Prompt</th>
               <th style={td}>Provider / model</th>
               <th style={td}>Started</th>
@@ -60,6 +68,9 @@ export function DashboardPage() {
                 <tr key={run.id}>
                   <td style={td}>
                     <Link to={`/runs/${run.id}`}>#{run.id}</Link>
+                  </td>
+                  <td style={td}>
+                    <RunStateBadge state={run.state} />
                   </td>
                   <td style={td}>{label}</td>
                   <td style={td}>

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.evaluation.runner import execute_run
+from app.evaluation.runner import execute_pending_run
 from app.models import EvaluationRun, PromptTemplate, TestCase
 from app.providers import get_provider
 from app.schemas import RunCreate, RunRead
@@ -11,8 +11,12 @@ from app.schemas import RunCreate, RunRead
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
-@router.post("", response_model=RunRead, status_code=201)
-def create_run(payload: RunCreate, session: Session = Depends(get_session)) -> EvaluationRun:
+@router.post("", response_model=RunRead, status_code=202)
+def create_run(
+    payload: RunCreate,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
+) -> EvaluationRun:
     prompt = session.get(PromptTemplate, payload.prompt_template_id)
     if not prompt:
         raise HTTPException(404, "prompt_template_id not found")
@@ -32,14 +36,27 @@ def create_run(payload: RunCreate, session: Session = Depends(get_session)) -> E
         raise HTTPException(400, "no test cases to evaluate")
 
     provider = get_provider()
-    return execute_run(
-        session,
-        prompt,
-        cases,
-        provider,
+    chosen_model = payload.model or provider.default_model
+
+    run = EvaluationRun(
+        prompt_template_id=prompt.id,
+        provider=provider.name,
+        model=chosen_model,
+        state="pending",
+        summary={"total": len(cases), "passed": 0, "failed": 0, "needs_review": 0},
+    )
+    session.add(run)
+    session.commit()
+    session.refresh(run)
+
+    background_tasks.add_task(
+        execute_pending_run,
+        run_id=run.id,
+        test_case_ids=[c.id for c in cases],
         model=payload.model,
         enable_llm_judge=payload.enable_llm_judge,
     )
+    return run
 
 
 @router.get("", response_model=list[RunRead])

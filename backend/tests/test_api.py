@@ -44,8 +44,16 @@ def test_create_run_and_review_flow(client, session):
         "/runs",
         json={"prompt_template_id": prompt_id, "test_case_ids": case_ids},
     )
-    assert resp.status_code == 201, resp.text
-    run = resp.json()
+    # 202 Accepted: run is queued, BackgroundTasks runs synchronously under
+    # TestClient so by the time we GET below, the run is finished.
+    assert resp.status_code == 202, resp.text
+    queued = resp.json()
+    assert queued["state"] == "pending"
+    assert queued["summary"]["total"] == 2
+    assert queued["results"] == []
+
+    run = client.get(f"/runs/{queued['id']}").json()
+    assert run["state"] == "completed"
     assert run["summary"]["total"] == 2
     assert len(run["results"]) == 2
 
@@ -61,6 +69,26 @@ def test_create_run_and_review_flow(client, session):
 
     refreshed = client.get(f"/runs/{run['id']}").json()
     assert refreshed["summary"]["needs_review"] >= 1
+
+
+def test_create_run_records_failed_state_on_provider_error(client, session, monkeypatch):
+    prompt_id, case_ids = _seed(session)
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("upstream is on fire")
+
+    from app.providers.mock_provider import MockProvider
+
+    monkeypatch.setattr(MockProvider, "complete", boom)
+
+    resp = client.post(
+        "/runs",
+        json={"prompt_template_id": prompt_id, "test_case_ids": case_ids},
+    )
+    assert resp.status_code == 202
+    run = client.get(f"/runs/{resp.json()['id']}").json()
+    assert run["state"] == "failed"
+    assert "upstream is on fire" in (run["summary"].get("error") or "")
 
 
 def test_create_run_404_on_missing_prompt(client):

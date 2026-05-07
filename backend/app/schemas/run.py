@@ -17,6 +17,7 @@ class RunSummary(BaseModel):
     passed: int = 0
     failed: int = 0
     needs_review: int = 0
+    error: str | None = None  # populated when state == "failed"
 
 
 class RunRead(BaseModel):
@@ -28,5 +29,6 @@ class RunRead(BaseModel):
     model: str
     started_at: datetime
     finished_at: datetime | None
+    state: str = "completed"
     summary: RunSummary
     results: list[ResultRead] = Field(default_factory=list)

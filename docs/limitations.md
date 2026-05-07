@@ -12,7 +12,7 @@ This is a small, focused evaluation harness. The list below is what it intention
 
 ## System limits
 
-- **Synchronous runs.** `POST /runs` blocks the request until every test case has been evaluated. With real LLM calls and many cases, this can be slow. Acceptable at current scale; a queue would be the right next step.
+- **In-process background work, no real queue.** `POST /runs` returns 202 immediately and the work runs via FastAPI `BackgroundTasks` inside the same process. That avoids long-blocking requests but won't survive a restart mid-run, won't fan out across workers, and won't retry on failure. For multi-worker or restart-tolerant deployments a real queue (e.g. ARQ + Redis) is the right next step.
 - **Single provider per run.** Selected via `LLM_PROVIDER`. The provider abstraction is in place, but there is no per-run multi-provider routing.
 - **No retries on provider failure.** A failing provider call propagates as a 500. There is no per-result retry policy.
 - **No streaming output, no partial progress.** The UI shows a "running…" state and waits for the final response.
