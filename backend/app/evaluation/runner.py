@@ -8,6 +8,7 @@ from app.models import EvaluationResult, EvaluationRun, PromptTemplate, TestCase
 from app.providers import LLMProvider
 
 from .checks import aggregate_status, run_checks
+from .judge import judge_output
 
 
 def render(template: str, context: str, question: str) -> str:
@@ -32,6 +33,7 @@ def execute_run(
     test_cases: list[TestCase],
     provider: LLMProvider,
     model: str | None = None,
+    enable_llm_judge: bool = False,
 ) -> EvaluationRun:
     chosen_model = model or provider.default_model
     run = EvaluationRun(
@@ -47,6 +49,16 @@ def execute_run(
         user_prompt = render(prompt.user_template, tc.context, tc.question)
         resp = provider.complete(prompt.system_prompt, user_prompt, model=chosen_model)
         outcomes = run_checks(resp.text, tc.expected_behavior or {})
+        if enable_llm_judge:
+            outcomes.append(
+                judge_output(
+                    provider,
+                    question=tc.question,
+                    context=tc.context,
+                    expected_behavior=tc.expected_behavior or {},
+                    model_output=resp.text,
+                )
+            )
         status = aggregate_status(outcomes, None)
         result = EvaluationResult(
             run_id=run.id,

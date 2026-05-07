@@ -31,6 +31,11 @@ def main() -> None:
     ap.add_argument("--model", default=None, help="override the provider's default model")
     ap.add_argument("--case-ids", nargs="*", type=int, help="specific test case ids")
     ap.add_argument("--all", action="store_true", help="run all test cases")
+    ap.add_argument(
+        "--judge",
+        action="store_true",
+        help="also run LLM-as-judge per test case (extra model call)",
+    )
     args = ap.parse_args()
 
     if not args.all and not args.case_ids:
@@ -56,7 +61,9 @@ def main() -> None:
             raise SystemExit("no test cases found")
 
         provider = get_provider(args.provider)
-        run = execute_run(session, prompt, cases, provider, model=args.model)
+        run = execute_run(
+            session, prompt, cases, provider, model=args.model, enable_llm_judge=args.judge
+        )
 
         run_id = run.id
         provider_name = run.provider

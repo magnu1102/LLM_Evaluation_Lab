@@ -148,12 +148,21 @@ function ResultCard({ result, testCase }: { result: Result; testCase?: TestCase 
 
       <h4 style={{ margin: "12px 0 4px" }}>Automatic checks</h4>
       <ul style={{ paddingLeft: 18, margin: 0 }}>
-        {result.automatic_checks.map((c, i) => (
-          <li key={i} style={{ color: c.passed ? "#155724" : "#721c24" }}>
-            {c.passed ? "✓" : "✗"} <strong>{c.criterion}</strong> ({c.severity})
-            {c.detail ? ` — ${c.detail}` : ""}
-          </li>
-        ))}
+        {result.automatic_checks.map((c, i) => {
+          const isJudge = c.criterion === "llm_judge";
+          const color = isJudge
+            ? "#3b3b8a"
+            : c.passed
+              ? "#155724"
+              : "#721c24";
+          const icon = isJudge ? "⚖" : c.passed ? "✓" : "✗";
+          return (
+            <li key={i} style={{ color }}>
+              {icon} <strong>{c.criterion}</strong> ({c.severity})
+              {c.detail ? ` — ${c.detail}` : ""}
+            </li>
+          );
+        })}
         {result.automatic_checks.length === 0 && <li>(no checks ran)</li>}
       </ul>
 

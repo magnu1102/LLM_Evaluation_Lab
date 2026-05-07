@@ -20,6 +20,8 @@ class MockProvider:
         return ProviderResponse(text=text, model=model or self.default_model, latency_ms=latency_ms)
 
     def _respond(self, system: str, user: str) -> str:
+        if "evaluation judge" in (system or "").lower():
+            return '{"verdict": "needs_review", "reason": "mock judge — no real model call"}'
         u = user.lower()
         if "[no context provided]" in u or "context: (none)" in u:
             return (

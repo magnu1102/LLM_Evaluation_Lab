@@ -9,6 +9,7 @@ export function NewRunPage() {
   const qc = useQueryClient();
   const [promptId, setPromptId] = useState<number | "">("");
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [enableJudge, setEnableJudge] = useState(false);
 
   const [promptsQ, casesQ] = useQueries({
     queries: [
@@ -40,7 +41,11 @@ export function NewRunPage() {
     e.preventDefault();
     if (typeof promptId !== "number") return;
     const ids = selected.size > 0 ? Array.from(selected) : allCases.map((c) => c.id);
-    createRun.mutate({ prompt_template_id: promptId, test_case_ids: ids });
+    createRun.mutate({
+      prompt_template_id: promptId,
+      test_case_ids: ids,
+      enable_llm_judge: enableJudge,
+    });
   };
 
   return (
@@ -102,6 +107,30 @@ export function NewRunPage() {
               ))}
             </div>
           </fieldset>
+
+          <label
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "flex-start",
+              padding: 12,
+              border: "1px dashed #ccc",
+              borderRadius: 6,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={enableJudge}
+              onChange={(e) => setEnableJudge(e.target.checked)}
+              style={{ marginTop: 4 }}
+            />
+            <span>
+              <strong>Run LLM-as-judge</strong> after deterministic checks (one extra
+              model call per case). Judge verdict is recorded with severity{" "}
+              <code>info</code> so it never overrides deterministic checks or human
+              review — it's a parallel signal, not a tiebreaker.
+            </span>
+          </label>
 
           <button
             type="submit"

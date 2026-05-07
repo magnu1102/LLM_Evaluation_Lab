@@ -27,8 +27,10 @@ The `criteria` table names each check, sets its severity, and carries a descript
 ### 3. Human review
 Every result has `human_rating` (`pass` | `fail` | `needs_review` | `null`) and `human_notes`. Reviewers set them via the Run detail page. When `human_rating` is set, `aggregate_status` returns it directly — but the underlying automatic checks remain on the row, so disagreements stay visible rather than getting silently overwritten.
 
-### 4. LLM-as-judge (future)
-Not implemented. When added, it will be a separate criterion type (`llm_judge`) with a documented prompt and severity, never used as a tiebreaker. See [limitations.md](limitations.md) for why.
+### 4. LLM-as-judge (optional)
+Implemented as an opt-in criterion. When `enable_llm_judge` is set on a run, the runner makes one extra provider call per test case asking for a structured JSON verdict (`pass | fail | needs_review` plus a one-sentence reason). The verdict is stored in `automatic_checks` with `criterion = "llm_judge"` and `severity = "info"`, so it is **always visible but never moves status**. It is a parallel signal, not a tiebreaker.
+
+The judge prompt lives in [`backend/app/evaluation/judge.py`](../backend/app/evaluation/judge.py). Parsing is permissive: strict JSON first, then a `{...}` substring match, falling back to `needs_review` with the raw text recorded in the detail. Judge models tend to favour outputs that resemble their own style; that's exactly why severity is `info` and why the deterministic checks remain the basis for the result's status.
 
 ## Status aggregation
 

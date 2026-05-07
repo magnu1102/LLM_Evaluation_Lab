@@ -32,7 +32,14 @@ def create_run(payload: RunCreate, session: Session = Depends(get_session)) -> E
         raise HTTPException(400, "no test cases to evaluate")
 
     provider = get_provider()
-    return execute_run(session, prompt, cases, provider, model=payload.model)
+    return execute_run(
+        session,
+        prompt,
+        cases,
+        provider,
+        model=payload.model,
+        enable_llm_judge=payload.enable_llm_judge,
+    )
 
 
 @router.get("", response_model=list[RunRead])

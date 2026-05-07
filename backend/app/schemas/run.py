@@ -9,6 +9,7 @@ class RunCreate(BaseModel):
     prompt_template_id: int
     test_case_ids: list[int] = Field(default_factory=list, description="Empty means all")
     model: str | None = None  # override provider default
+    enable_llm_judge: bool = False
 
 
 class RunSummary(BaseModel):

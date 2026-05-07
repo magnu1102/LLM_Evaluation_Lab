@@ -47,3 +47,15 @@ criteria:
     severity: warn
     description: Output should stay within the configured maximum length.
     examples: []
+
+  - name: llm_judge
+    type: llm_judge
+    severity: info
+    description: |
+      Optional LLM-as-judge verdict. Asks the configured provider to rate
+      the output as pass/fail/needs_review against the test case. Severity
+      is "info" so it never overrides deterministic checks or the human
+      rating — it is a parallel signal, not a tiebreaker.
+    examples:
+      - 'verdict=pass; cites both sources and stays within length'
+      - 'verdict=fail; invents a retention period not in the context'

@@ -20,8 +20,12 @@ export const api = {
   listPromptTemplates: () => request<PromptTemplate[]>("/prompt-templates"),
   listRuns: () => request<Run[]>("/runs"),
   getRun: (id: number) => request<Run>(`/runs/${id}`),
-  createRun: (body: { prompt_template_id: number; test_case_ids: number[]; model?: string }) =>
-    request<Run>("/runs", { method: "POST", body: JSON.stringify(body) }),
+  createRun: (body: {
+    prompt_template_id: number;
+    test_case_ids: number[];
+    model?: string;
+    enable_llm_judge?: boolean;
+  }) => request<Run>("/runs", { method: "POST", body: JSON.stringify(body) }),
   reviewResult: (id: number, body: { human_rating: Status | null; human_notes: string }) =>
     request<Result>(`/results/${id}/review`, {
       method: "PATCH",

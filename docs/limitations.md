@@ -7,7 +7,7 @@ This is a small, focused evaluation harness. The list below is what it intention
 - **Deterministic checks are heuristics.** A regex-based citation check accepts `[1]` or `[source]` and rejects "see source 1". A refusal-phrase list will miss novel phrasings of "I don't know". Both false positives and false negatives are possible and expected.
 - **Small sample sizes, no statistical claims.** The seed set is a handful of synthetic test cases. Pass rates from this set are not benchmarks and should not be presented as accuracy figures.
 - **Status is triage, not a score.** `pass | fail | needs_review` is a routing signal. It is not weighted, not calibrated, and not comparable across very different test sets.
-- **LLM-as-judge is not in scope yet.** When added, it will be one signal among others, never a tiebreaker. Judge models tend to favour outputs that resemble their own style.
+- **LLM-as-judge is one signal among others.** When `enable_llm_judge` is set on a run, the judge runs at severity `info`, so it never overrides deterministic checks or human review. Judge models tend to favour outputs that resemble their own style; using a different provider for the judge than for the answer is one way to reduce that bias, but it does not eliminate it.
 - **No causal claims about prompt changes.** The Compare page surfaces which test cases changed status between two runs. With small samples, single-run noise can look like a regression. Reviewers are expected to confirm before drawing conclusions.
 
 ## System limits
